@@ -1,41 +1,45 @@
 import React, { useState } from 'react';
 import { View, Text, TextInput, TouchableOpacity, StyleSheet, Image, ToastAndroid } from 'react-native';
-import AsyncStorage from '@react-native-async-storage/async-storage';
-import CustomAlert from './CustomAlert';
+import ErrorAlert from './ErrorAlert';
 import loginImage from "../assets/loginGIF.gif";
-export default function LoginScreen({ onNavigateToRegister, fetchLocation, setIsLoggedIn }) {
+export default function RegisterScreen({ onNavigateToLogin }) {
+  const [name, setName] = useState('');
   const [mobileNumber, setMobileNumber] = useState('');
+  const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [isAlertVisible, setAlertVisible] = useState(false);
-  const handleLogin = async () => {
-    if (mobileNumber.length !== 10 || !/^[6-9]/.test(mobileNumber)) {
-      setAlertVisible(true); // Show the custom alert
-      return;
+  const [error, setError] = useState(false);
+
+  const handleRegister = async () => {
+    if (name.length < 3) {
+      ToastAndroid.show('Name must have min 3 char.', ToastAndroid.LONG);
+    } else if (mobileNumber.length < 10) {
+      ToastAndroid.show('Please enter a valid mobile number', ToastAndroid.LONG);
+    } else if (!/^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/.test(email)) {
+      ToastAndroid.show('Please enter a valid email', ToastAndroid.LONG);
+    } else if (password.length < 6) {
+      ToastAndroid.show('Password must have min 6 char.', ToastAndroid.LONG);
     } else {
       try {
-        const response = await fetch(`http://192.168.109.103:5000/api/login`, {
+        const response = await fetch(`http://192.168.109.103:5000/api/register`, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
           },
-          body: JSON.stringify({ emailOrMobile: mobileNumber, password: password })
+          body: JSON.stringify({ name, email, mobileNumber, password })
         });
         const json = await response.json();
         if (json.token) {
-          await AsyncStorage.setItem('userToken', json.token);
-          setIsLoggedIn(true);
-          fetchLocation(); // Fetch location after successful login
-          ToastAndroid.show('User Logged in Successfully.', ToastAndroid.SHORT);
-        } else {
-          ToastAndroid.show('Invalid Credentials', ToastAndroid.LONG);
+          ToastAndroid.show('User Registered Successfully.', ToastAndroid.LONG);
+          onNavigateToLogin(); // Navigate back to login screen
+        } else{
+          ToastAndroid.show('User Already Exists with email or mobile number', ToastAndroid.LONG);
         }
       } catch (error) {
         ToastAndroid.show('Internal Server Error', ToastAndroid.LONG);
         console.error(error);
-      };
+      }
     }
-  };
-
+  }
   return (
     <View style={styles.loginContainer}>
       <View style={styles.imageContainer}>
@@ -44,19 +48,29 @@ export default function LoginScreen({ onNavigateToRegister, fetchLocation, setIs
           style={styles.image}
         />
       </View>
-      <Text style={styles.heading}>Let's sign you in.</Text>
+      <Text style={styles.heading}>Let's register you.</Text>
+      <Text style={styles.info}>Please register using valid details to avoid permanent account suspension on ShareMate.</Text>
+      <View style={styles.inputContainer}>
+        <TextInput
+          style={styles.input}
+          placeholder="Enter your name here"
+
+          onChangeText={(name) => { setName(name) }}
+          value={name}
+        />
+      </View>
       <View style={styles.inputContainer}>
         <Text style={styles.countryCode}>+91</Text>
         <TextInput
           style={styles.input}
-          placeholder="Enter your mobile number"
+          placeholder="9876543210"
           keyboardType="numeric"
           maxLength={10}
-          onChangeText={(text) => {
+          onChangeText={(mobile) => {
             // Allow only digits and ensure the number is valid
-            if (/^\d*$/.test(text) && text.length <= 10) {
+            if (/^\d*$/.test(mobile) && mobile.length <= 10) {
               // Allow first digit to be anything but validate on login
-              setMobileNumber(text);
+              setMobileNumber(mobile);
             }
           }}
           value={mobileNumber}
@@ -65,18 +79,26 @@ export default function LoginScreen({ onNavigateToRegister, fetchLocation, setIs
       <View style={styles.inputContainer}>
         <TextInput
           style={styles.input}
+          placeholder="example@email.com"
+          onChangeText={(email) => { setEmail(email) }}
+          value={email}
+        />
+      </View>
+      <View style={styles.inputContainer}>
+        <TextInput
+          style={styles.input}
           placeholder="*******************"
           secureTextEntry={true}
-          onChangeText={setPassword}
+          onChangeText={(password) => { setPassword(password) }}
           value={password}
         />
       </View>
-      <CustomAlert isVisible={isAlertVisible} onClose={() => setAlertVisible(false)} />
-      <TouchableOpacity style={styles.button} onPress={handleLogin}>
-        <Text style={styles.buttonText}>Sign in</Text>
+      <ErrorAlert error={error} onClose={() => setError(false)} />
+      <TouchableOpacity style={styles.button} onPress={handleRegister}>
+        <Text style={styles.buttonText}>Register</Text>
       </TouchableOpacity>
-      <TouchableOpacity style={styles.registerButton} onPress={onNavigateToRegister}>
-        <Text style={styles.buttonText}>New User? Register Here</Text>
+      <TouchableOpacity style={styles.signInButton} onPress={onNavigateToLogin}>
+        <Text style={styles.buttonText}>Already User? Sign in Here</Text>
       </TouchableOpacity>
       <Text style={{ textAlign: 'center', fontSize: 12, color: '#8e75e4' }}>Having Problem? Feel free to Contact @ sharemateofficial@gmail.com</Text>
     </View>
@@ -89,14 +111,6 @@ const styles = StyleSheet.create({
     height: 200, // Set the desired height
     resizeMode: 'contain',
   },
-  imageContainer: {
-    justifyContent: 'center',
-    alignItems: 'center',
-    padding: 20,
-    borderRadius: 10,
-    width: '100%',
-    maxWidth: "90%",
-  },
   loginContainer: {
     justifyContent: 'center',
     alignItems: 'center',
@@ -108,12 +122,27 @@ const styles = StyleSheet.create({
     shadowRadius: 4,
     elevation: 20,
   },
+  imageContainer: {
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 20,
+    borderRadius: 10,
+    width: '100%',
+    maxWidth: "90%",
+  },
   heading: {
     fontSize: 30,
-    marginBottom: 20,
     textAlign: 'center',
     color: "#130c6b",
     fontWeight: "bold"
+  },
+  info: {
+    fontSize: 20,
+    marginBottom: 10,
+    textAlign: 'center',
+    color: "#F76464",
+    fontStyle: "italic",
+    fontWeight: "600",
   },
   inputContainer: {
     flexDirection: 'row',
@@ -121,8 +150,8 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: '#ccc',
     borderRadius: 50,
-    paddingLeft: 15,
     padding: 5,
+    paddingLeft: 15,
     marginBottom: 10,
   },
   countryCode: {
@@ -142,7 +171,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginBottom: 10,
   },
-  registerButton: {
+  signInButton: {
     backgroundColor: '#002C5C', // Button background color
     padding: 15,
     borderRadius: 50,

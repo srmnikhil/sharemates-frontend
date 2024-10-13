@@ -54,7 +54,7 @@ const BatteryStatus = () => {
             batteryLevelSubscription.remove();
             chargingSubscription.remove();
         };
-    }, []);
+    }, [batteryLevel, charging]);
 
     const getBatteryImage = () => {
         if (charging) {
@@ -75,7 +75,7 @@ const BatteryStatus = () => {
     const battery = batteryLevel !== null ? batteryLevel.toFixed(0) : 'Loading...';
 
     return (
-        <View>
+        <View style ={{marginRight: 70}}>
             <View style={{ alignItems: 'center' }}>
                 <Image
                     source={getBatteryImage()}

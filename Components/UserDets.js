@@ -15,8 +15,7 @@ const UserDets = ({ details, onClose, latitude, longitude }) => {
 
             if (data.display_name) {
                 const address = data.display_name; // The full address in a readable format
-                console.log('Address:', address);
-                setAddress(address); 
+                setAddress(address);
             } else {
                 console.error('No address found for the given coordinates.');
             }
@@ -42,8 +41,10 @@ const UserDets = ({ details, onClose, latitude, longitude }) => {
                         <Text style={styles.mainText}>{address ? address : 'Loading address...'}
                         </Text>
                     </View>
-                    <Battery />
-                    <Network />
+                    <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: "center", padding: 5}}>
+                        <Battery />
+                        <Network />
+                    </View>
                 </View>
                 <TouchableOpacity onPress={onClose} style={styles.button} accessibilityLabel="Close Alert" accessibilityRole="button">
                     <Text style={styles.buttonText}>Close</Text>
@@ -56,7 +57,7 @@ const UserDets = ({ details, onClose, latitude, longitude }) => {
 const styles = StyleSheet.create({
     modalContent: {
         backgroundColor: 'white',
-        paddingBottom: 10,
+        padding: 10,
         borderRadius: 15,
         alignItems: 'center',
     },

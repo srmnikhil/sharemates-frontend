@@ -6,6 +6,7 @@ import MapView, { Marker } from 'react-native-maps';
 import Icon from 'react-native-vector-icons/Ionicons';
 import LoginScreen from './Components/Login';
 import UserDets from './Components/UserDets';
+import RegisterScreen from './Components/Register';
 export default function App() {
   const [location, setLocation] = useState(null);
   const [errorMsg, setErrorMsg] = useState(null);
@@ -13,6 +14,8 @@ export default function App() {
   const [details, setDetails] = useState(false);
   const [mapType, setMapType] = useState('standard'); // State to manage map type
   const [isLoggedIn, setIsLoggedIn] = useState(false); // State to manage login status
+  const [showRegister, setShowRegister] = useState(false);
+  const [showLogin, setShowLogin] = useState(true);
 
   const fetchLocation = async () => {
     setLoading(true);
@@ -23,7 +26,6 @@ export default function App() {
       setLoading(false);
       return;
     }
-
     try {
       let currentLocation = await Location.getCurrentPositionAsync({});
       setLocation(currentLocation.coords);
@@ -35,7 +37,6 @@ export default function App() {
   };
 
   const handleUserDetails = () => {
-    console.log("UserClicked");
     setDetails(true);
   }
 
@@ -61,13 +62,27 @@ export default function App() {
     locationText = `Latitude: ${location.latitude}, Longitude: ${location.longitude}`;
   }
 
+  const handleRegister = () => {
+    setShowLogin(false); // Hide the login screen
+    setShowRegister(true); // Show the registration screen
+  };
+  const handleLogin = () => {
+    setShowLogin(true); // Hide the login screen
+    setShowRegister(false); // Show the registration screen
+  };
+
   return (
     <View style={styles.container}>
       {!isLoggedIn ? (
-        <View style={styles.loginContainer}>
-          <LoginScreen fetchLocation={fetchLocation} setIsLoggedIn={setIsLoggedIn} />
-        </View>
-      ) : (
+        showLogin ? (
+          <View style={styles.loginContainer}>
+            <LoginScreen fetchLocation={fetchLocation} setIsLoggedIn={setIsLoggedIn} onNavigateToRegister={handleRegister} />
+          </View>
+        ) :
+            <View style={styles.loginContainer}>
+              <RegisterScreen onNavigateToLogin={handleLogin} />
+            </View>
+          ) : (
         <>
           {loading ? (
             <ActivityIndicator size="large" color="#0000ff" />
@@ -79,8 +94,8 @@ export default function App() {
                   initialRegion={{
                     latitude: location.latitude,
                     longitude: location.longitude,
-                    latitudeDelta: 0.01,
-                    longitudeDelta: 0.01,
+                    latitudeDelta: 0.005,
+                    longitudeDelta: 0.005,
                   }}
                   mapType={mapType} // Set the map type here
                 >
@@ -89,7 +104,7 @@ export default function App() {
                       latitude: location.latitude,
                       longitude: location.longitude,
                     }}
-                    title="You are here"
+                    title="Current Location"
                     description="This is your current location"
                   />
                 </MapView>
